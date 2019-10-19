@@ -142,7 +142,7 @@ public class MainActivity extends Activity implements OnClickListener {
         try {
             bluetoothConnect();
         } catch (IOException e) {
-
+            doToast("Error in connect. " + e.getMessage());
         }
     }
 
@@ -204,7 +204,6 @@ public class MainActivity extends Activity implements OnClickListener {
     }
     private void bluetoothConnect() throws IOException {
         while(!connected){
-            try {
                 btAdapter = BluetoothAdapter.getDefaultAdapter();
                 address = btAdapter.getAddress();
                 btDevice = btAdapter.getBondedDevices();
@@ -216,8 +215,6 @@ public class MainActivity extends Activity implements OnClickListener {
                     }
                 }
 
-            } catch (Exception we) {
-            }
             btAdapter = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice dispositivo = btAdapter.getRemoteDevice(address);
             btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(hcUUID);
@@ -229,9 +226,8 @@ public class MainActivity extends Activity implements OnClickListener {
             }
             connected=btSocket.isConnected();
         }
-
     }
-
+    
     @Override
     public void onClick(View v) {
         try {
@@ -254,10 +250,14 @@ public class MainActivity extends Activity implements OnClickListener {
             }
 
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+            doToast("Error in transmit. " + e.getMessage());
 
         }
 
+    }
+
+    private void doToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     public void receive(){
@@ -292,7 +292,7 @@ public class MainActivity extends Activity implements OnClickListener {
             }
 
         } catch (IOException e) {
-
+            doToast("Error in receive. " + e.getMessage());
         }
 
     }
