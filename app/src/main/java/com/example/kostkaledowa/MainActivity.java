@@ -2,6 +2,7 @@ package com.example.kostkaledowa;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ public class MainActivity extends Activity implements OnClickListener {
     boolean colorChoice=false;
     String address, name;
     InputStream inputStream;
+    OutputStream outputStream;
     BluetoothAdapter btAdapter;
     BluetoothSocket btSocket;
     Set<BluetoothDevice> btDevice;
@@ -66,6 +68,7 @@ public class MainActivity extends Activity implements OnClickListener {
     boolean win = false;
     boolean connected = false;
     char temp4=' ';
+
     public void declareButtons() {
         for (int z = 0; z < 4; z++) {
             for (int y = 0; y < 4; y++) {
@@ -122,6 +125,18 @@ public class MainActivity extends Activity implements OnClickListener {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            inputStream.close();
+            outputStream.close();
+            btSocket.close();
+        }
+        catch (Exception e) {
+            doToast("ondestroy exception on cleanup." + e.getMessage());
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,6 +234,8 @@ public class MainActivity extends Activity implements OnClickListener {
             BluetoothDevice dispositivo = btAdapter.getRemoteDevice(address);
             btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(hcUUID);
             btSocket.connect();
+            inputStream = btSocket.getInputStream();
+            outputStream = btSocket.getOutputStream();
 
             try {
                 tv1.setText("BT Name: " + name + "\nBT Address: " + address);
@@ -227,7 +244,7 @@ public class MainActivity extends Activity implements OnClickListener {
             connected=btSocket.isConnected();
         }
     }
-    
+
     @Override
     public void onClick(View v) {
         try {
@@ -242,7 +259,7 @@ public class MainActivity extends Activity implements OnClickListener {
         try {
             if (btSocket != null) {
                 if(readyFlag==1){
-                    btSocket.getOutputStream().write(i.toString().getBytes());
+                    outputStream.write(i.toString().getBytes());
                 }
                 readyFlag=0;
 
@@ -257,7 +274,7 @@ public class MainActivity extends Activity implements OnClickListener {
     }
 
     private void doToast(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
     }
 
     public void receive(){
@@ -266,7 +283,6 @@ public class MainActivity extends Activity implements OnClickListener {
             if(colorChoice){
                 byte[] buffer = new byte[1024];
                 int bytes;
-                inputStream = btSocket.getInputStream();
                 bytes = inputStream.read(buffer);
                 String incomingMessage = new String(buffer, 0, bytes);
                 if(!win){
@@ -275,19 +291,21 @@ public class MainActivity extends Activity implements OnClickListener {
                     tv2.setText("WIN"+colorChar);
                 }
                 char[] charArray = incomingMessage.toCharArray();
-                int z=charArray[0]-'0';
-                int y=charArray[1]-'0';
-                int x=charArray[2]-'0';
-                if(charArray[3]=='R' && matrix[z][y][x]==' ' && !win){
+                int z=charArray[charArray.length-1-3]-'0';
+                int y=charArray[charArray.length-1-2]-'0';
+                int x=charArray[charArray.length-1-1]-'0';
+                char color = charArray[charArray.length-1];
+
+                if(color=='R' && matrix[z][y][x]==' ' && !win){
                     radiobutton[z][y][x].setBackgroundColor(Color.RED);
-                    matrix[z][y][x]=charArray[3];
+                    matrix[z][y][x]=color;
                 }
-                else if(charArray[3]=='G'&& matrix[z][y][x]==' ' && !win){
+                else if(color=='G'&& matrix[z][y][x]==' ' && !win){
                     radiobutton[z][y][x].setBackgroundColor(Color.GREEN);
-                    matrix[z][y][x]=charArray[3];
-                }else if(charArray[3]=='B'&& matrix[z][y][x]==' ' && !win){
+                    matrix[z][y][x]=color;
+                }else if(color=='B'&& matrix[z][y][x]==' ' && !win){
                     radiobutton[z][y][x].setBackgroundColor(Color.BLUE);
-                    matrix[z][y][x]=charArray[3];
+                    matrix[z][y][x]=color;
                 }
             }
 
